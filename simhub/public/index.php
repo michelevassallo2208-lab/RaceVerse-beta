@@ -83,7 +83,7 @@ function card(item, idx){
 }
 async function search(){
   results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10">Caricamento…</div>`;
-  const url = `/api/hotlaps.php?game=${encodeURIComponent(gameEl.value)}&category=${encodeURIComponent(catEl.value)}&track=${encodeURIComponent(trackEl.value)}`;
+  const url = `api/hotlaps.php?game=${encodeURIComponent(gameEl.value)}&category=${encodeURIComponent(catEl.value)}&track=${encodeURIComponent(trackEl.value)}`;
   const res = await fetch(url);
   if (!res.ok){ results.innerHTML = `<div class="p-4 rounded-xl bg-red-600/20 border border-red-500/30 text-red-100">Errore nel caricamento</div>`; return; }
   const data = await res.json();
@@ -95,7 +95,7 @@ btn.addEventListener('click', search);
 
 // Cambia la lista piste quando cambia il gioco
 gameEl.addEventListener('change', async ()=>{
-  const res = await fetch('/api/tracks.php?game='+encodeURIComponent(gameEl.value));
+  const res = await fetch('api/tracks.php?game='+encodeURIComponent(gameEl.value));
   const list = await res.json();
   trackEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
 });

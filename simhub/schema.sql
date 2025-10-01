@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(190) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin','user') NOT NULL DEFAULT 'user',
-  subscription_plan VARCHAR(64) DEFAULT NULL, -- 'MetaVerse Pro'
+  role ENUM('admin','pro','guest') NOT NULL DEFAULT 'guest',
+  subscription_plan VARCHAR(64) DEFAULT NULL, -- 'RaceVerse Pro'
   subscription_active TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -65,5 +65,15 @@ ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- Admin demo: admin@example.com / admin123
 INSERT INTO users (email,password_hash,role,subscription_plan,subscription_active)
-VALUES ('admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'admin', 'MetaVerse Pro', 1)
-ON DUPLICATE KEY UPDATE role='admin';
+VALUES ('admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'admin', 'RaceVerse Pro', 1)
+ON DUPLICATE KEY UPDATE role='admin', subscription_plan='RaceVerse Pro', subscription_active=1;
+
+-- Demo RaceVerse Pro member
+INSERT INTO users (email,password_hash,role,subscription_plan,subscription_active)
+VALUES ('pro@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'pro', 'RaceVerse Pro', 1)
+ON DUPLICATE KEY UPDATE role='pro', subscription_plan='RaceVerse Pro', subscription_active=1;
+
+-- Demo guest user
+INSERT INTO users (email,password_hash,role)
+VALUES ('guest@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'guest')
+ON DUPLICATE KEY UPDATE role='guest';

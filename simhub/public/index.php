@@ -2,20 +2,27 @@
 require_once __DIR__ . '/../src/Database.php';
 $pdo = Database::pdo();
 $games = $pdo->query("SELECT id,name FROM games ORDER BY name")->fetchAll();
-$categories = $pdo->query("SELECT id,name FROM categories ORDER BY name")->fetchAll();
-$defaultGame = (int)($games[0]['id'] ?? 1);
+$defaultGame = (int)($games[0]['id'] ?? 0);
+$categories = [];
 $tracks = [];
-$st=$pdo->prepare("SELECT id,name FROM tracks WHERE game_id=? ORDER BY name");
-$st->execute([$defaultGame]);
-$tracks=$st->fetchAll();
+if ($defaultGame) {
+  $catStmt = $pdo->prepare("SELECT DISTINCT c.id, c.name FROM categories c JOIN cars car ON car.category_id = c.id WHERE car.game_id = ? ORDER BY c.name");
+  $catStmt->execute([$defaultGame]);
+  $categories = $catStmt->fetchAll();
+
+  $trackStmt = $pdo->prepare("SELECT id,name FROM tracks WHERE game_id=? ORDER BY name");
+  $trackStmt->execute([$defaultGame]);
+  $tracks = $trackStmt->fetchAll();
+}
 
 include __DIR__ . '/../templates/header.php';
 ?>
 
 <section class="rounded-3xl p-8 md:p-12 bg-gradient-to-br from-indigo-600/20 via-pink-500/10 to-emerald-500/10 border border-white/10 shadow-xl mb-10">
   <div class="max-w-3xl">
+    <p class="uppercase tracking-[0.35em] text-xs text-white/60 mb-3">RaceVerse Performance Garage</p>
     <h1 class="text-4xl md:text-5xl font-extrabold mb-3">Trova l'auto top per ogni pista</h1>
-    <p class="text-white/80 text-lg">Hotlap dei pro, meta sempre aggiornato. Gratis per i dati. Con <strong>MetaVerse Pro</strong> scarichi gli assetti premium.</p>
+    <p class="text-white/80 text-lg">Hotlap dei pro, meta sempre aggiornato. Gratis per i dati. Con <strong>RaceVerse Pro</strong> scarichi gli assetti premium.</p>
   </div>
 </section>
 
@@ -46,7 +53,7 @@ include __DIR__ . '/../templates/header.php';
       </select>
     </div>
     <div class="flex items-end">
-      <button id="btn-search" class="w-full py-3 rounded-xl bg-white text-black font-semibold">Mostra risultati</button>
+      <button id="btn-search" type="button" class="w-full py-3 rounded-xl bg-white text-black font-semibold">Mostra risultati</button>
     </div>
   </form>
 
@@ -63,9 +70,10 @@ const results= document.getElementById('results');
 const btn    = document.getElementById('btn-search');
 
 function fmt(ms){
+  if (!Number.isFinite(ms)) { return '—'; }
   const m = Math.floor(ms/60000);
   const s = Math.floor((ms%60000)/1000);
-  const mm = (ms%1000);
+  const mm = ms % 1000;
   return m+":"+String(s).padStart(2,'0')+"."+String(mm).padStart(3,'0');
 }
 function card(item, idx){
@@ -82,23 +90,62 @@ function card(item, idx){
     </div>`;
 }
 async function search(){
+  if (!gameEl.value || !catEl.value || !trackEl.value) {
+    results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Seleziona gioco, categoria e pista per vedere i tempi dei pro.</div>`;
+    return;
+  }
   results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10">Caricamento…</div>`;
   const url = `/api/hotlaps.php?game=${encodeURIComponent(gameEl.value)}&category=${encodeURIComponent(catEl.value)}&track=${encodeURIComponent(trackEl.value)}`;
-  const res = await fetch(url);
-  if (!res.ok){ results.innerHTML = `<div class="p-4 rounded-xl bg-red-600/20 border border-red-500/30 text-red-100">Errore nel caricamento</div>`; return; }
-  const data = await res.json();
-  if (!data.length){ results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Nessun hotlap per la combinazione selezionata.</div>`; return; }
-  results.innerHTML = data.map((x,i)=>card(x,i)).join('');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('network');
+    const data = await res.json();
+    if (!data.length){
+      results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Nessun hotlap per la combinazione selezionata.</div>`;
+      return;
+    }
+    results.innerHTML = data.map((x,i)=>card(x,i)).join('');
+  } catch (err) {
+    results.innerHTML = `<div class="p-4 rounded-xl bg-red-600/20 border border-red-500/30 text-red-100">Errore nel caricamento dei dati.</div>`;
+  }
 }
 
 btn.addEventListener('click', search);
 
-// Cambia la lista piste quando cambia il gioco
+async function loadCategories(gameId){
+  try {
+    const res = await fetch('/api/categories.php?game='+encodeURIComponent(gameId));
+    if (!res.ok) throw new Error('network');
+    const list = await res.json();
+    catEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  } catch (err) {
+    catEl.innerHTML = '';
+  }
+}
+
+async function loadTracks(gameId){
+  try {
+    const res = await fetch('/api/tracks.php?game='+encodeURIComponent(gameId));
+    if (!res.ok) throw new Error('network');
+    const list = await res.json();
+    trackEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  } catch (err) {
+    trackEl.innerHTML = '';
+  }
+}
+
+// Cambia lista piste e categorie al cambio gioco
 gameEl.addEventListener('change', async ()=>{
-  const res = await fetch('/api/tracks.php?game='+encodeURIComponent(gameEl.value));
-  const list = await res.json();
-  trackEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  await Promise.all([loadCategories(gameEl.value), loadTracks(gameEl.value)]);
+  search();
 });
+
+catEl.addEventListener('change', search);
+trackEl.addEventListener('change', search);
+
+if (gameEl.value && catEl.value && trackEl.value) {
+  search();
+}
 
 </script>
 

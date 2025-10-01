@@ -15,7 +15,7 @@ include __DIR__ . '/../templates/header.php';
 <section class="rounded-3xl p-8 md:p-12 bg-gradient-to-br from-indigo-600/20 via-pink-500/10 to-emerald-500/10 border border-white/10 shadow-xl mb-10">
   <div class="max-w-3xl">
     <h1 class="text-4xl md:text-5xl font-extrabold mb-3">Trova l'auto top per ogni pista</h1>
-    <p class="text-white/80 text-lg">Hotlap dei pro, meta sempre aggiornato. Gratis per i dati. Con <strong>MetaVerse Pro</strong> scarichi gli assetti premium.</p>
+    <p class="text-white/80 text-lg">Hotlap dei pro, meta sempre aggiornato. Gratis per i dati. Con <strong>Raceverse Pro</strong> scarichi gli assetti premium.</p>
   </div>
 </section>
 

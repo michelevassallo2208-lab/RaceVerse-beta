@@ -23,6 +23,6 @@ class Auth {
   public static function logout(): void { self::start(); $_SESSION=[]; session_destroy(); }
   public static function isAdmin(): bool { $u=self::user(); return $u && $u['role']==='admin'; }
   public static function isPro(): bool {
-    $u=self::user(); return $u && $u['subscription_plan']==='MetaVerse Pro' && $u['subscription_active'];
+    $u=self::user(); return $u && $u['subscription_plan']==='RaceVerse PRO' && $u['subscription_active'];
   }
 }

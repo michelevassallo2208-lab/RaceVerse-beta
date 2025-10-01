@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../src/helpers.php';
+require_once __DIR__ . '/../src/Auth.php';
+Auth::start();
+$currentUser = Auth::user();
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -22,7 +25,12 @@ require_once __DIR__ . '/../src/helpers.php';
       <a href="<?= asset('index.php') ?>" class="px-3 py-2 hover:underline decoration-2">Home</a>
       <a href="<?= asset('hotlaps.php') ?>" class="px-3 py-2 hover:underline decoration-2">Hotlaps</a>
       <a href="<?= asset('setups.php') ?>" class="px-3 py-2 hover:underline decoration-2">Setups</a>
-      <a href="<?= asset('login.php') ?>" class="ml-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20">Login</a>
+      <?php if ($currentUser): ?>
+        <a href="<?= asset('account.php') ?>" class="ml-2 px-4 py-2 rounded-lg bg-white text-black font-semibold">Dashboard</a>
+      <?php else: ?>
+        <a href="<?= asset('login.php') ?>" class="ml-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20">Login</a>
+        <a href="<?= asset('register.php') ?>" class="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-semibold">Registrati</a>
+      <?php endif; ?>
     </nav>
   </div>
 </header>

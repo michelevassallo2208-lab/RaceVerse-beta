@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__ . '/../src/Database.php';
+require_once __DIR__ . '/../src/Auth.php';
+Auth::start();
+$currentUser = Auth::user();
+$canDownloadSetups = Auth::isAdmin() || Auth::isPro();
 $pdo = Database::pdo();
 $games = $pdo->query("SELECT id,name FROM games ORDER BY name")->fetchAll();
 $categories = $pdo->query("SELECT id,name FROM categories ORDER BY name")->fetchAll();
@@ -53,6 +57,24 @@ include __DIR__ . '/../templates/header.php';
   <div id="results" class="space-y-3">
     <div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Scegli e premi “Mostra risultati”.</div>
   </div>
+  <div id="download-area" class="hidden mt-6">
+    <?php if ($canDownloadSetups): ?>
+      <a href="<?= asset('account.php') ?>#download-assetto" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold shadow">Download Assetto</a>
+    <?php elseif ($currentUser): ?>
+      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <span>Attiva RaceVerse Pro per scaricare questo assetto.</span>
+        <a href="<?= asset('account.php') ?>#subscription" class="inline-flex items-center px-4 py-2 rounded-lg bg-amber-400/20 border border-amber-400/50 text-amber-100">Attiva abbonamento</a>
+      </div>
+    <?php else: ?>
+      <div class="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <span class="text-white/80">Accedi o registrati per abbonarti a RaceVerse Pro e scaricare gli assetti premium.</span>
+        <div class="flex items-center gap-2">
+          <a href="<?= asset('login.php') ?>" class="px-4 py-2 rounded-lg bg-white/10 border border-white/20">Login</a>
+          <a href="<?= asset('register.php') ?>" class="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-semibold">Registrati</a>
+        </div>
+      </div>
+    <?php endif; ?>
+  </div>
 </section>
 
 <script>
@@ -61,6 +83,7 @@ const catEl  = document.getElementById('sel-category');
 const trackEl= document.getElementById('sel-track');
 const results= document.getElementById('results');
 const btn    = document.getElementById('btn-search');
+const downloadArea = document.getElementById('download-area');
 
 function fmt(ms){
   const m = Math.floor(ms/60000);
@@ -83,12 +106,14 @@ function card(item, idx){
 }
 async function search(){
   results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10">Caricamento…</div>`;
+  if (downloadArea) downloadArea.classList.add('hidden');
   const url = `/api/hotlaps.php?game=${encodeURIComponent(gameEl.value)}&category=${encodeURIComponent(catEl.value)}&track=${encodeURIComponent(trackEl.value)}`;
   const res = await fetch(url);
   if (!res.ok){ results.innerHTML = `<div class="p-4 rounded-xl bg-red-600/20 border border-red-500/30 text-red-100">Errore nel caricamento</div>`; return; }
   const data = await res.json();
   if (!data.length){ results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Nessun hotlap per la combinazione selezionata.</div>`; return; }
   results.innerHTML = data.map((x,i)=>card(x,i)).join('');
+  if (downloadArea) downloadArea.classList.remove('hidden');
 }
 
 btn.addEventListener('click', search);

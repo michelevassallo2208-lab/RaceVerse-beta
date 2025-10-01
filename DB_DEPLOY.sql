@@ -353,8 +353,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dump dei dati della tabella simhub.users: ~2 rows (circa)
 INSERT INTO `users` (`id`, `email`, `password_hash`, `first_name`, `last_name`, `verification_token`, `email_verified_at`, `role`, `subscription_plan`, `subscription_active`, `created_at`) VALUES
-	(1, 'admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'User', 'Raceverse', NULL, NULL, 'admin', 'MetaVerse Pro', 1, '2025-10-01 08:26:46'),
-	(2, 'michelevassallo1999@gmail.com', '$2y$10$vRvRTWq7hEOegFPQlQlWCOiLOWb8e6haYRkQqBJDnJFQuDYBnDxHG', 'Michele', 'Vassallo', '38bcca10daaa0a9c2a70b95ffadaa4b09ab961cf6d0ffdca2bbaf04bd7d14614', '2025-10-01 12:55:24', 'admin', 'MetaVerse Pro', 1, '2025-10-01 10:53:30');
+        (1, 'admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'User', 'Raceverse', NULL, NULL, 'admin', 'RaceVerse PRO', 1, '2025-10-01 08:26:46'),
+        (2, 'michelevassallo1999@gmail.com', '$2y$10$vRvRTWq7hEOegFPQlQlWCOiLOWb8e6haYRkQqBJDnJFQuDYBnDxHG', 'Michele', 'Vassallo', '38bcca10daaa0a9c2a70b95ffadaa4b09ab961cf6d0ffdca2bbaf04bd7d14614', '2025-10-01 12:55:24', 'admin', 'RaceVerse PRO', 1, '2025-10-01 10:53:30');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

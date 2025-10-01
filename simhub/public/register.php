@@ -1,0 +1,166 @@
+<?php
+require_once __DIR__ . '/../src/Database.php';
+require_once __DIR__ . '/../src/helpers.php';
+require_once __DIR__ . '/../src/Auth.php';
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (file_exists($autoload)) {
+  require_once $autoload;
+}
+require_once __DIR__ . '/../src/Mailer.php';
+Auth::start();
+$errors = [];
+$success = false;
+$mailWarning = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $firstName = trim($_POST['first_name'] ?? '');
+  $lastName = trim($_POST['last_name'] ?? '');
+  $email = strtolower(trim($_POST['email'] ?? ''));
+  $emailConfirm = strtolower(trim($_POST['email_confirm'] ?? ''));
+  $password = $_POST['password'] ?? '';
+  $passwordConfirm = $_POST['password_confirm'] ?? '';
+
+  if (!$firstName) { $errors['first_name'] = 'Inserisci il tuo nome.'; }
+  if (!$lastName) { $errors['last_name'] = 'Inserisci il tuo cognome.'; }
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors['email'] = 'Email non valida.';
+  }
+  if ($email !== $emailConfirm) {
+    $errors['email_confirm'] = 'Le email devono coincidere.';
+  }
+  if (strlen($password) < 8) {
+    $errors['password'] = 'La password deve contenere almeno 8 caratteri.';
+  }
+  if ($password !== $passwordConfirm) {
+    $errors['password_confirm'] = 'Le password devono coincidere.';
+  }
+
+  if (!$errors) {
+    try {
+      $pdo = Database::pdo();
+      $existing = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+      $existing->execute([$email]);
+      if ($existing->fetch()) {
+        $errors['email'] = 'Questa email è già registrata. Prova ad accedere.';
+      } else {
+        $token = bin2hex(random_bytes(32));
+        $stmt = $pdo->prepare('INSERT INTO users (email, password_hash, first_name, last_name, verification_token, subscription_plan, subscription_active, subscription_started_at, subscription_renews_at, subscription_payment_method, subscription_cancel_at_period_end) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 0)');
+        $stmt->execute([
+          $email,
+          password_hash($password, PASSWORD_DEFAULT),
+          $firstName,
+          $lastName,
+          $token,
+          'RaceVerse BASIC',
+          null,
+          null,
+          null
+        ]);
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $path = asset('verify.php?token=' . urlencode($token));
+        $verifyUrl = rtrim($scheme . '://' . $host, '/') . $path;
+        $displayName = trim($firstName . ' ' . $lastName) ?: $firstName ?: $email;
+        try {
+          $sent = Mailer::sendVerificationEmail($email, $displayName, $verifyUrl);
+          if ($sent) {
+            $success = true;
+          } else {
+            $success = true;
+            $mailWarning = true;
+          }
+        } catch (Throwable $mailException) {
+          error_log('Mailer fatal error: ' . $mailException->getMessage());
+          $success = true;
+          $mailWarning = true;
+        }
+      }
+    } catch (PDOException $e) {
+      $errors['general'] = 'Impossibile completare la registrazione. Verifica la connessione al database.';
+    }
+  }
+}
+
+include __DIR__ . '/../templates/header.php';
+?>
+<section class="max-w-4xl mx-auto rounded-3xl p-10 bg-black/40 border border-white/10 shadow-2xl shadow-emerald-500/20">
+  <div class="grid md:grid-cols-2 gap-10 items-start">
+    <div class="space-y-5">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400">
+          <img src="<?= asset('assets/images/logo.png') ?>" class="w-8 h-8" alt="logo RaceVerse">
+        </span>
+        <h1 class="text-3xl font-bold">Crea il tuo account RaceVerse</h1>
+      </div>
+      <p class="text-white/70 text-sm leading-relaxed">
+        L'iscrizione gratuita ti apre l'accesso a <strong>RaceVerse BASIC</strong> per gestire i tuoi dati e prepararti alle prossime sessioni.
+        Dopo la registrazione riceverai un'email per confermare l'indirizzo. Potrai passare a <strong>RaceVerse PRO</strong> (2,99€/mese) dalla pagina abbonamento.
+      </p>
+      <ul class="space-y-2 text-white/75 text-sm">
+        <li>• Accesso immediato alla dashboard RaceVerse BASIC.</li>
+        <li>• Possibilità di salvare preferiti e annotazioni sui tuoi giri.</li>
+        <li>• Upgrade rapido a RaceVerse PRO per ottenere report premium.</li>
+      </ul>
+      <p class="text-xs text-white/50">Le email di conferma vengono inviate automaticamente dal mailer sicuro RaceVerse.</p>
+    </div>
+    <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+      <?php if ($success): ?>
+        <div class="p-4 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-sm mb-4">
+          Registrazione completata! Controlla la posta per confermare l'indirizzo e-mail e attivare il tuo profilo RaceVerse BASIC.
+        </div>
+        <?php if ($mailWarning): ?>
+          <div class="p-4 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-100 text-sm mb-4">
+            Non siamo riusciti a inviare automaticamente l'email di conferma. Contatta <a href="mailto:support@raceverse.it" class="underline">support@raceverse.it</a> indicando la tua email per finalizzare l'attivazione.
+          </div>
+        <?php endif; ?>
+        <div class="flex flex-wrap gap-3">
+          <a href="<?= asset('login.php') ?>" class="inline-flex px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Vai al login</a>
+          <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Guarda i vantaggi PRO</a>
+        </div>
+      <?php else: ?>
+        <?php if (!empty($errors['general'])): ?>
+          <div class="p-4 rounded-xl bg-red-500/20 border border-red-400/40 text-red-100 text-sm mb-4"><?= htmlspecialchars($errors['general']) ?></div>
+        <?php endif; ?>
+        <form method="post" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm mb-1 text-white/70" for="first_name">Nome</label>
+              <input id="first_name" name="first_name" type="text" value="<?= htmlspecialchars($firstName ?? '') ?>" class="w-full p-3 rounded-xl bg-black/40 border border-white/20 focus:outline-none focus:border-emerald-400" required>
+              <?php if (!empty($errors['first_name'])): ?><p class="text-xs text-red-300 mt-1"><?= htmlspecialchars($errors['first_name']) ?></p><?php endif; ?>
+            </div>
+            <div>
+              <label class="block text-sm mb-1 text-white/70" for="last_name">Cognome</label>
+              <input id="last_name" name="last_name" type="text" value="<?= htmlspecialchars($lastName ?? '') ?>" class="w-full p-3 rounded-xl bg-black/40 border border-white/20 focus:outline-none focus:border-emerald-400" required>
+              <?php if (!empty($errors['last_name'])): ?><p class="text-xs text-red-300 mt-1"><?= htmlspecialchars($errors['last_name']) ?></p><?php endif; ?>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm mb-1 text-white/70" for="email">Email</label>
+            <input id="email" name="email" type="email" value="<?= htmlspecialchars($email ?? '') ?>" class="w-full p-3 rounded-xl bg-black/40 border border-white/20 focus:outline-none focus:border-emerald-400" required>
+            <?php if (!empty($errors['email'])): ?><p class="text-xs text-red-300 mt-1"><?= htmlspecialchars($errors['email']) ?></p><?php endif; ?>
+          </div>
+          <div>
+            <label class="block text-sm mb-1 text-white/70" for="email_confirm">Conferma email</label>
+            <input id="email_confirm" name="email_confirm" type="email" value="<?= htmlspecialchars($emailConfirm ?? '') ?>" class="w-full p-3 rounded-xl bg-black/40 border border-white/20 focus:outline-none focus:border-emerald-400" required>
+            <?php if (!empty($errors['email_confirm'])): ?><p class="text-xs text-red-300 mt-1"><?= htmlspecialchars($errors['email_confirm']) ?></p><?php endif; ?>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm mb-1 text-white/70" for="password">Password</label>
+              <input id="password" name="password" type="password" class="w-full p-3 rounded-xl bg-black/40 border border-white/20 focus:outline-none focus:border-emerald-400" required>
+              <?php if (!empty($errors['password'])): ?><p class="text-xs text-red-300 mt-1"><?= htmlspecialchars($errors['password']) ?></p><?php endif; ?>
+            </div>
+            <div>
+              <label class="block text-sm mb-1 text-white/70" for="password_confirm">Conferma password</label>
+              <input id="password_confirm" name="password_confirm" type="password" class="w-full p-3 rounded-xl bg-black/40 border border-white/20 focus:outline-none focus:border-emerald-400" required>
+              <?php if (!empty($errors['password_confirm'])): ?><p class="text-xs text-red-300 mt-1"><?= htmlspecialchars($errors['password_confirm']) ?></p><?php endif; ?>
+            </div>
+          </div>
+          <button class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Completa registrazione</button>
+          <p class="text-xs text-white/50 text-center">Registrandoti accetti i termini di utilizzo di RaceVerse. L'upgrade a RaceVerse PRO costa €2,99/mese e potrà essere attivato dopo la conferma dell'account.</p>
+        </form>
+      <?php endif; ?>
+    </div>
+  </div>
+</section>
+<?php include __DIR__ . '/../templates/footer.php'; ?>

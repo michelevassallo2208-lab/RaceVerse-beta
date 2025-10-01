@@ -23,7 +23,7 @@ include __DIR__ . '/../templates/header.php';
   <?php endif; ?>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="p-5 rounded-xl bg-black/40 border border-white/10">
+    <div id="subscription" class="p-5 rounded-xl bg-black/40 border border-white/10">
       <h3 class="font-semibold mb-2">MetaVerse Pro</h3>
       <p class="text-sm text-white/70 mb-3">Accesso al download degli assetti premium.</p>
       <?php if (!Auth::isPro()): ?>
@@ -37,5 +37,13 @@ include __DIR__ . '/../templates/header.php';
       <a href="/logout.php" class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 inline-block">Logout</a>
     </div>
   </div>
+
+  <?php if (Auth::isAdmin() || Auth::isPro()): ?>
+    <div id="download-assetto" class="mt-6 p-5 rounded-xl bg-white/5 border border-white/10">
+      <h3 class="font-semibold mb-2">Download Assetti</h3>
+      <p class="text-sm text-white/70 mb-3">Accedi ai file degli assetti premium direttamente dalla tua dashboard.</p>
+      <a href="#" class="px-4 py-2 rounded-lg bg-white text-black inline-block">Scarica ultimo assetto</a>
+    </div>
+  <?php endif; ?>
 </section>
 <?php include __DIR__ . '/../templates/footer.php'; ?>

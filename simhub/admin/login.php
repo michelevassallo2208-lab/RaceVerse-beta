@@ -6,7 +6,12 @@ $error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (Auth::login($_POST['email'] ?? '', $_POST['password'] ?? '')) {
     header('Location: /admin/index.php'); exit;
-  } else { $error = 'Credenziali non valide'; }
+  } else {
+    $errCode = Auth::lastError();
+    $error = $errCode === 'unverified'
+      ? 'L\'account non è ancora verificato. Completa la conferma via email.'
+      : 'Credenziali non valide';
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -20,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="hero-gradient min-h-screen flex items-center justify-center">
   <form method="post" class="glass border border-white/10 p-8 rounded-2xl w-[380px] max-w-[92vw]">
     <div class="flex items-center gap-3 mb-6">
-      <img src="/assets/images/logo.png" class="w-10 h-10" alt="logo">
-      <h1 class="text-xl font-bold">Admin • SimHub</h1>
+      <img src="/assets/images/logo.png" class="w-14 h-14 drop-shadow-lg" alt="Raceverse logo">
+      <h1 class="text-xl font-bold">Admin • Raceverse</h1>
     </div>
     <?php if ($error): ?>
       <div class="mb-4 p-3 rounded bg-red-500/15 border border-red-500/25 text-red-200 text-sm"><?= htmlspecialchars($error) ?></div>

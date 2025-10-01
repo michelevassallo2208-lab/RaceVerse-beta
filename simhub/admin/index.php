@@ -7,7 +7,7 @@ if (!Auth::isAdmin()) { header('Location: /login.php'); exit; }
 <!DOCTYPE html>
 <html lang="it"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin • MetaSim</title>
+<title>Admin • Raceverse</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head><body class="bg-gray-100">
 <div class="max-w-5xl mx-auto p-6">

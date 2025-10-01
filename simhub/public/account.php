@@ -8,10 +8,10 @@ include __DIR__ . '/../templates/header.php';
 ?>
 <section class="rounded-3xl p-6 md:p-8 bg-white/5 border border-white/10 mb-8">
   <div class="flex items-center gap-3 mb-4">
-    <img src="/assets/images/logo.png" class="w-10 h-10" alt="logo">
+    <img src="<?= asset('assets/images/logo.png') ?>" class="w-14 h-14 drop-shadow-lg" alt="Raceverse logo">
     <div>
-      <h1 class="text-2xl font-bold">Ciao, <?= htmlspecialchars($user['email']) ?></h1>
-      <p class="text-sm text-white/60">Ruolo: <strong><?= htmlspecialchars($user['role']) ?></strong> • Piano: <strong><?= htmlspecialchars($user['subscription_plan'] ?: 'Nessuno') ?></strong> <?= $user['subscription_active'] ? '✅' : '❌' ?></p>
+      <h1 class="text-2xl font-bold">Ciao, <?= htmlspecialchars(trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''))) ?: htmlspecialchars($user['email']) ?></h1>
+      <p class="text-sm text-white/60">Email: <strong><?= htmlspecialchars($user['email']) ?></strong> • Ruolo: <strong><?= htmlspecialchars($user['role']) ?></strong> • Piano: <strong><?= htmlspecialchars($user['subscription_plan'] ?: 'Nessuno') ?></strong> <?= $user['subscription_active'] ? '✅' : '❌' ?></p>
     </div>
   </div>
 
@@ -24,7 +24,7 @@ include __DIR__ . '/../templates/header.php';
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="p-5 rounded-xl bg-black/40 border border-white/10">
-      <h3 class="font-semibold mb-2">MetaVerse Pro</h3>
+      <h3 class="font-semibold mb-2">Raceverse Pro</h3>
       <p class="text-sm text-white/70 mb-3">Accesso al download degli assetti premium.</p>
       <?php if (!Auth::isPro()): ?>
         <a href="#" class="px-4 py-2 rounded-lg bg-white text-black inline-block">Attiva abbonamento</a>

@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="it">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login Admin</title>
+<title>RaceVerse • Login Admin</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <form method="post" class="glass border border-white/10 p-8 rounded-2xl w-[380px] max-w-[92vw]">
     <div class="flex items-center gap-3 mb-6">
       <img src="/assets/images/logo.png" class="w-10 h-10" alt="logo">
-      <h1 class="text-xl font-bold">Admin • SimHub</h1>
+      <h1 class="text-xl font-bold">Admin • RaceVerse</h1>
     </div>
     <?php if ($error): ?>
       <div class="mb-4 p-3 rounded bg-red-500/15 border border-red-500/25 text-red-200 text-sm"><?= htmlspecialchars($error) ?></div>

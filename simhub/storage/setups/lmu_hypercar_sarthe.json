@@ -1,0 +1,21 @@
+{
+  "game": "Le Mans Ultimate",
+  "track": "Circuit de la Sarthe",
+  "car": "Porsche 963 Hypercar",
+  "version": "2024.05",
+  "notes": "Assetto da hotlap per stint da qualifica con temperatura asfalto 28°C.",
+  "aero": {
+    "front": 6,
+    "rear": 9
+  },
+  "suspension": {
+    "front_arb": 4,
+    "rear_arb": 3
+  },
+  "tyres": {
+    "pressure_front_left": 1.28,
+    "pressure_front_right": 1.28,
+    "pressure_rear_left": 1.22,
+    "pressure_rear_right": 1.22
+  }
+}

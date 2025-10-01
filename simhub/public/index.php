@@ -1,21 +1,34 @@
 <?php
 require_once __DIR__ . '/../src/Database.php';
+require_once __DIR__ . '/../src/Auth.php';
+
+Auth::start();
+$currentUser = Auth::user();
+$hasSetupAccess = Auth::hasSetupAccess();
+
 $pdo = Database::pdo();
 $games = $pdo->query("SELECT id,name FROM games ORDER BY name")->fetchAll();
-$categories = $pdo->query("SELECT id,name FROM categories ORDER BY name")->fetchAll();
-$defaultGame = (int)($games[0]['id'] ?? 1);
+$defaultGame = (int)($games[0]['id'] ?? 0);
+$categories = [];
 $tracks = [];
-$st=$pdo->prepare("SELECT id,name FROM tracks WHERE game_id=? ORDER BY name");
-$st->execute([$defaultGame]);
-$tracks=$st->fetchAll();
+if ($defaultGame) {
+  $catStmt = $pdo->prepare("SELECT DISTINCT c.id, c.name FROM categories c JOIN cars car ON car.category_id = c.id WHERE car.game_id = ? ORDER BY c.name");
+  $catStmt->execute([$defaultGame]);
+  $categories = $catStmt->fetchAll();
+
+  $trackStmt = $pdo->prepare("SELECT id,name FROM tracks WHERE game_id=? ORDER BY name");
+  $trackStmt->execute([$defaultGame]);
+  $tracks = $trackStmt->fetchAll();
+}
 
 include __DIR__ . '/../templates/header.php';
 ?>
 
 <section class="rounded-3xl p-8 md:p-12 bg-gradient-to-br from-indigo-600/20 via-pink-500/10 to-emerald-500/10 border border-white/10 shadow-xl mb-10">
   <div class="max-w-3xl">
+    <p class="uppercase tracking-[0.35em] text-xs text-white/60 mb-3">RaceVerse Performance Garage</p>
     <h1 class="text-4xl md:text-5xl font-extrabold mb-3">Trova l'auto top per ogni pista</h1>
-    <p class="text-white/80 text-lg">Hotlap dei pro, meta sempre aggiornato. Gratis per i dati. Con <strong>MetaVerse Pro</strong> scarichi gli assetti premium.</p>
+    <p class="text-white/80 text-lg">Hotlap dei pro, meta sempre aggiornato. Gratis per i dati. Con <strong>RaceVerse Pro</strong> scarichi gli assetti premium.</p>
   </div>
 </section>
 
@@ -46,7 +59,7 @@ include __DIR__ . '/../templates/header.php';
       </select>
     </div>
     <div class="flex items-end">
-      <button id="btn-search" class="w-full py-3 rounded-xl bg-white text-black font-semibold">Mostra risultati</button>
+      <button id="btn-search" type="button" class="w-full py-3 rounded-xl bg-white text-black font-semibold">Mostra risultati</button>
     </div>
   </form>
 
@@ -61,14 +74,36 @@ const catEl  = document.getElementById('sel-category');
 const trackEl= document.getElementById('sel-track');
 const results= document.getElementById('results');
 const btn    = document.getElementById('btn-search');
+const hasSetupAccess = <?= $hasSetupAccess ? 'true' : 'false' ?>;
+const isLoggedIn = <?= $currentUser ? 'true' : 'false' ?>;
+const upgradeUrl = <?= json_encode(asset('abbonamenti.php')); ?>;
+const downloadBase = <?= json_encode(asset('download_setup.php')); ?>;
 
 function fmt(ms){
+  if (!Number.isFinite(ms)) { return '—'; }
   const m = Math.floor(ms/60000);
   const s = Math.floor((ms%60000)/1000);
-  const mm = (ms%1000);
+  const mm = ms % 1000;
   return m+":"+String(s).padStart(2,'0')+"."+String(mm).padStart(3,'0');
 }
+function lockMessage(){
+  if (hasSetupAccess) {
+    return '';
+  }
+  if (isLoggedIn) {
+    return `<span class="text-xs text-amber-200">Serve <a href="${upgradeUrl}" class="underline">RaceVerse Pro</a> per scaricare.</span>`;
+  }
+  return `<span class="text-xs text-amber-200">Accedi o <a href="${upgradeUrl}" class="underline">abbonati</a> per scaricare.</span>`;
+}
+
 function card(item, idx){
+  const hasSetup = Boolean(item.setup_available);
+  const downloadHref = hasSetup
+    ? (hasSetupAccess ? `${downloadBase}?id=${encodeURIComponent(item.id)}` : upgradeUrl)
+    : '';
+  const button = hasSetup
+    ? `<a href="${downloadHref}" class="ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl ${hasSetupAccess ? 'bg-emerald-400 text-black' : 'bg-white/10 text-white hover:bg-white/20'} font-semibold text-sm transition" ${hasSetupAccess ? '' : 'data-locked="1"'}>Download Setup</a>`
+    : '<span class="ml-auto text-xs text-white/50">Setup in arrivo</span>';
   return `
     <div class="p-4 rounded-xl bg-black/40 border border-white/10 flex items-center gap-4">
       <div class="w-20 h-12 bg-white/5 border border-white/10 rounded overflow-hidden flex items-center justify-center">
@@ -78,27 +113,92 @@ function card(item, idx){
         <div class="text-xs text-white/60">#${idx+1}</div>
         <div class="text-lg font-semibold">${item.car_name}</div>
         <div class="text-sm text-white/80">Best: <strong>${fmt(item.lap_time_ms)}</strong> • Driver: ${item.driver || '—'} • ${item.recorded_at?.slice(0,10) || ''}</div>
+        ${hasSetup ? `<div class="mt-1">${lockMessage()}</div>` : ''}
       </div>
+      ${button}
     </div>`;
 }
 async function search(){
+  if (!gameEl.value || !catEl.value || !trackEl.value) {
+    results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Seleziona gioco, categoria e pista per vedere i tempi dei pro.</div>`;
+    return;
+  }
   results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10">Caricamento…</div>`;
   const url = `/api/hotlaps.php?game=${encodeURIComponent(gameEl.value)}&category=${encodeURIComponent(catEl.value)}&track=${encodeURIComponent(trackEl.value)}`;
-  const res = await fetch(url);
-  if (!res.ok){ results.innerHTML = `<div class="p-4 rounded-xl bg-red-600/20 border border-red-500/30 text-red-100">Errore nel caricamento</div>`; return; }
-  const data = await res.json();
-  if (!data.length){ results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Nessun hotlap per la combinazione selezionata.</div>`; return; }
-  results.innerHTML = data.map((x,i)=>card(x,i)).join('');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('network');
+    const data = await res.json();
+    if (!data.length){
+      results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Nessun hotlap per la combinazione selezionata.</div>`;
+      return;
+    }
+    results.innerHTML = data.map((x,i)=>card(x,i)).join('');
+  } catch (err) {
+    results.innerHTML = `<div class="p-4 rounded-xl bg-red-600/20 border border-red-500/30 text-red-100">Errore nel caricamento dei dati.</div>`;
+  }
 }
 
 btn.addEventListener('click', search);
 
-// Cambia la lista piste quando cambia il gioco
+async function loadCategories(gameId){
+  try {
+    const res = await fetch('/api/categories.php?game='+encodeURIComponent(gameId));
+    if (!res.ok) throw new Error('network');
+    const list = await res.json();
+    if (list.length) {
+      catEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+      catEl.disabled = false;
+      catEl.value = list[0].id;
+    } else {
+      catEl.innerHTML = '<option value="">Nessuna categoria</option>';
+      catEl.disabled = true;
+    }
+    return list;
+  } catch (err) {
+    catEl.innerHTML = '';
+    catEl.disabled = true;
+    return [];
+  }
+}
+
+async function loadTracks(gameId){
+  try {
+    const res = await fetch('/api/tracks.php?game='+encodeURIComponent(gameId));
+    if (!res.ok) throw new Error('network');
+    const list = await res.json();
+    if (list.length) {
+      trackEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+      trackEl.disabled = false;
+      trackEl.value = list[0].id;
+    } else {
+      trackEl.innerHTML = '<option value="">Nessuna pista</option>';
+      trackEl.disabled = true;
+    }
+    return list;
+  } catch (err) {
+    trackEl.innerHTML = '';
+    trackEl.disabled = true;
+    return [];
+  }
+}
+
+// Cambia lista piste e categorie al cambio gioco
 gameEl.addEventListener('change', async ()=>{
-  const res = await fetch('/api/tracks.php?game='+encodeURIComponent(gameEl.value));
-  const list = await res.json();
-  trackEl.innerHTML = list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  const [cats, tracks] = await Promise.all([loadCategories(gameEl.value), loadTracks(gameEl.value)]);
+  if (cats.length && tracks.length) {
+    search();
+  } else {
+    results.innerHTML = `<div class="p-4 rounded-xl bg-black/30 border border-white/10 text-gray-300">Nessun dato disponibile per il gioco selezionato.</div>`;
+  }
 });
+
+catEl.addEventListener('change', search);
+trackEl.addEventListener('change', search);
+
+if (gameEl.value && catEl.value && trackEl.value) {
+  search();
+}
 
 </script>
 

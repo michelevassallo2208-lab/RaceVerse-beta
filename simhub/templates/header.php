@@ -1,11 +1,15 @@
 <?php
 require_once __DIR__ . '/../src/helpers.php';
+require_once __DIR__ . '/../src/Auth.php';
+
+Auth::start();
+$currentUser = Auth::user();
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>MetaSim</title>
+  <title>RaceVerse Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="<?= asset('assets/images/logo.png') ?>">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,13 +20,23 @@ require_once __DIR__ . '/../src/helpers.php';
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
     <a href="<?= asset('index.php') ?>" class="flex items-center gap-3">
       <img src="<?= asset('assets/images/logo.png') ?>" class="w-8 h-8" alt="logo">
-      <span class="text-xl font-extrabold">MetaSim</span>
+      <span class="text-xl font-extrabold">RaceVerse</span>
     </a>
     <nav class="flex items-center gap-2 text-sm">
       <a href="<?= asset('index.php') ?>" class="px-3 py-2 hover:underline decoration-2">Home</a>
       <a href="<?= asset('hotlaps.php') ?>" class="px-3 py-2 hover:underline decoration-2">Hotlaps</a>
       <a href="<?= asset('setups.php') ?>" class="px-3 py-2 hover:underline decoration-2">Setups</a>
-      <a href="<?= asset('login.php') ?>" class="ml-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20">Login</a>
+      <a href="<?= asset('abbonamenti.php') ?>" class="px-3 py-2 hover:underline decoration-2">Abbonamenti</a>
+      <?php if ($currentUser): ?>
+        <?php if (Auth::isAdmin()): ?>
+          <a href="<?= asset('admin/index.php') ?>" class="px-3 py-2 rounded-lg bg-amber-500/20 border border-amber-400/30 text-amber-200">Admin</a>
+        <?php endif; ?>
+        <a href="<?= asset('account.php') ?>" class="ml-2 px-4 py-2 rounded-lg bg-white text-black font-semibold flex items-center gap-2">
+          <span><?= htmlspecialchars(Auth::roleLabel($currentUser['role'])) ?></span>
+        </a>
+      <?php else: ?>
+        <a href="<?= asset('login.php') ?>" class="ml-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20">Login</a>
+      <?php endif; ?>
     </nav>
   </div>
 </header>

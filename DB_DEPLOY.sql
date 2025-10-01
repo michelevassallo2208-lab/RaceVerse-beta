@@ -346,15 +346,19 @@ CREATE TABLE IF NOT EXISTS `users` (
   `role` enum('admin','user') NOT NULL DEFAULT 'user',
   `subscription_plan` varchar(64) DEFAULT NULL,
   `subscription_active` tinyint(1) NOT NULL DEFAULT 0,
+  `subscription_started_at` datetime DEFAULT NULL,
+  `subscription_renews_at` datetime DEFAULT NULL,
+  `subscription_payment_method` varchar(120) DEFAULT NULL,
+  `subscription_cancel_at_period_end` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dump dei dati della tabella simhub.users: ~2 rows (circa)
-INSERT INTO `users` (`id`, `email`, `password_hash`, `first_name`, `last_name`, `verification_token`, `email_verified_at`, `role`, `subscription_plan`, `subscription_active`, `created_at`) VALUES
-	(1, 'admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'User', 'Raceverse', NULL, NULL, 'admin', 'MetaVerse Pro', 1, '2025-10-01 08:26:46'),
-	(2, 'michelevassallo1999@gmail.com', '$2y$10$vRvRTWq7hEOegFPQlQlWCOiLOWb8e6haYRkQqBJDnJFQuDYBnDxHG', 'Michele', 'Vassallo', '38bcca10daaa0a9c2a70b95ffadaa4b09ab961cf6d0ffdca2bbaf04bd7d14614', '2025-10-01 12:55:24', 'admin', 'MetaVerse Pro', 1, '2025-10-01 10:53:30');
+INSERT INTO `users` (`id`, `email`, `password_hash`, `first_name`, `last_name`, `verification_token`, `email_verified_at`, `role`, `subscription_plan`, `subscription_active`, `subscription_started_at`, `subscription_renews_at`, `subscription_payment_method`, `subscription_cancel_at_period_end`, `created_at`) VALUES
+        (1, 'admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'User', 'Raceverse', NULL, NULL, 'admin', 'RaceVerse PRO', 1, '2025-09-15 08:00:00', '2025-10-15 08:00:00', 'Carta di credito (Stripe)', 0, '2025-10-01 08:26:46'),
+        (2, 'michelevassallo1999@gmail.com', '$2y$10$vRvRTWq7hEOegFPQlQlWCOiLOWb8e6haYRkQqBJDnJFQuDYBnDxHG', 'Michele', 'Vassallo', '38bcca10daaa0a9c2a70b95ffadaa4b09ab961cf6d0ffdca2bbaf04bd7d14614', '2025-10-01 12:55:24', 'user', 'RaceVerse BASIC', 0, NULL, NULL, NULL, 0, '2025-10-01 10:53:30');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

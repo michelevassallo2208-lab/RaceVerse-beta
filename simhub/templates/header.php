@@ -31,7 +31,7 @@ $baseUrl = asset('');
     </a>
     <nav class="flex items-center gap-1 text-sm">
       <a href="<?= asset('index.php') ?>" class="nav-link">Home</a>
-      <a href="<?= asset('payment.php') ?>" class="nav-link">Abbonamento</a>
+      <a href="<?= asset('payment.php') ?>" class="nav-link">Accesso PRO</a>
       <a href="<?= $currentUser ? asset('support.php') : asset('support-guest.php') ?>" class="nav-link">Supporto</a>
       <?php if ($currentUser): ?>
         <a href="<?= asset('account.php') ?>" class="ml-3 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-cyan-500/30 transition">Dashboard</a>

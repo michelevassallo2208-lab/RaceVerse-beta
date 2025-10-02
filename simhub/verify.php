@@ -21,7 +21,7 @@ if ($token) {
         $update = $pdo->prepare('UPDATE users SET email_verified_at = NOW(), verification_token = NULL, subscription_plan = COALESCE(subscription_plan, "RaceVerse BASIC") WHERE id = ?');
         $update->execute([$user['id']]);
         $status = 'success';
-        $message = 'Email verificata con successo! Il tuo account RaceVerse BASIC è attivo. Puoi effettuare l\'upgrade a PRO in qualsiasi momento dalla pagina abbonamento.';
+        $message = 'Email verificata con successo! Il tuo account RaceVerse BASIC è attivo. Puoi acquistare un pass PRO in qualsiasi momento dalla pagina Accesso PRO.';
       }
     } else {
       $message = 'Token di verifica non trovato o già utilizzato.';

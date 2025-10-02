@@ -113,6 +113,7 @@ if ($activated) {
             'subscription_active' => (bool)$freshUser['subscription_active'],
             'subscription_started_at' => $freshUser['subscription_started_at'],
             'subscription_renews_at' => $freshUser['subscription_renews_at'],
+            'subscription_expires_at' => $freshUser['subscription_expires_at'] ?? $freshUser['subscription_renews_at'],
             'subscription_payment_method' => $freshUser['subscription_payment_method'],
             'subscription_cancel_at_period_end' => (bool)$freshUser['subscription_cancel_at_period_end'],
         ]);

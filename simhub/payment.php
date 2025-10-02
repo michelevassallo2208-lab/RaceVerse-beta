@@ -37,14 +37,13 @@ $formatDateTime = static function (?string $dateTime): ?string {
   return $dt ? $dt->format('d/m/Y H:i') : $dateTime;
 };
 $startedAt = $formatDateTime($userSnapshot['subscription_started_at'] ?? null);
-$renewsAt = $formatDateTime($userSnapshot['subscription_renews_at'] ?? null);
+$expiresAt = $formatDateTime($userSnapshot['subscription_expires_at'] ?? $userSnapshot['subscription_renews_at'] ?? null);
 $paymentMethod = $userSnapshot['subscription_payment_method'] ?? null;
-$cancelAtPeriodEnd = !empty($userSnapshot['subscription_cancel_at_period_end']);
 $plans = SubscriptionManager::allPlans();
 $status = $_GET['status'] ?? null;
 $statusMessage = null;
 if ($status === 'success') {
-  $statusMessage = 'Pagamento completato con successo! Il tuo piano RaceVerse PRO è ora attivo.';
+  $statusMessage = 'Pagamento completato con successo! Il tuo accesso RaceVerse PRO è ora attivo.';
 } elseif ($status === 'cancelled') {
   $statusMessage = 'Hai annullato il pagamento. Puoi riprovare quando vuoi.';
 } elseif ($status === 'error') {
@@ -56,15 +55,15 @@ include __DIR__ . '/templates/header.php';
 <?php if ($isPro): ?>
   <section class="rounded-3xl p-8 md:p-12 bg-gradient-to-br from-emerald-700/30 via-teal-600/20 to-indigo-700/30 border border-white/10 shadow-2xl shadow-emerald-500/20">
     <div class="max-w-4xl space-y-5">
-      <span class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/10 border border-white/20 text-xs uppercase tracking-[0.35em]">Abbonamento attivo</span>
-      <h1 class="text-4xl md:text-5xl font-black leading-tight">Sei già abbonato a RaceVerse PRO</h1>
+      <span class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/10 border border-white/20 text-xs uppercase tracking-[0.35em]">Pass PRO attivo</span>
+      <h1 class="text-4xl md:text-5xl font-black leading-tight">Hai già attivato l'accesso RaceVerse PRO</h1>
       <?php if ($statusMessage): ?>
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10 text-sm text-white/80"><?= htmlspecialchars($statusMessage) ?></div>
       <?php endif; ?>
-      <p class="text-white/70 text-lg">Grazie per supportare RaceVerse: il tuo piano PRO è attivo e continuerà a offrirti accesso prioritario a setup, report avanzati e assistenza dedicata.</p>
+      <p class="text-white/70 text-lg">Grazie per supportare RaceVerse: il tuo pass PRO ti garantisce accesso prioritario a setup, report avanzati e assistenza dedicata fino alla scadenza indicata.</p>
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
-          <div class="text-white/50 text-xs uppercase tracking-wider mb-1">Piano</div>
+          <div class="text-white/50 text-xs uppercase tracking-wider mb-1">Tipo accesso</div>
           <div class="text-white font-semibold"><?= htmlspecialchars($planName) ?></div>
         </div>
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
@@ -72,8 +71,8 @@ include __DIR__ . '/templates/header.php';
           <div class="text-white font-semibold"><?= htmlspecialchars($startedAt ?? '—') ?></div>
         </div>
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
-          <div class="text-white/50 text-xs uppercase tracking-wider mb-1">Prossimo rinnovo</div>
-          <div class="text-white font-semibold"><?= htmlspecialchars($renewsAt ?? '—') ?></div>
+          <div class="text-white/50 text-xs uppercase tracking-wider mb-1">Scadenza</div>
+          <div class="text-white font-semibold"><?= htmlspecialchars($expiresAt ?? '—') ?></div>
         </div>
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10">
           <div class="text-white/50 text-xs uppercase tracking-wider mb-1">Pagamento</div>
@@ -86,33 +85,24 @@ include __DIR__ . '/templates/header.php';
   <section class="grid lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 space-y-6">
       <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-emerald-500/10">
-        <h2 class="text-2xl font-bold mb-4">Dettagli del tuo abbonamento</h2>
+        <h2 class="text-2xl font-bold mb-4">Dettagli del tuo accesso</h2>
         <ul class="space-y-3 text-sm text-white/75">
           <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">1</span> Accesso immediato ai setup certificati e alle analisi dei migliori hotlap.</li>
           <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">2</span> Supporto prioritario via email con il team RaceVerse per coaching e richieste dedicate.</li>
-          <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">3</span> Nuovi contenuti premium in arrivo: riceverai notifiche con ogni aggiornamento.</li>
+          <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">3</span> Nessun rinnovo automatico: al termine del periodo potrai acquistare un nuovo pass quando preferisci.</li>
         </ul>
       </div>
 
-      <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-indigo-500/10" id="payment-retention">
-        <h2 class="text-2xl font-bold mb-4">Gestione e cancellazione</h2>
-        <p class="text-sm text-white/70 mb-4">Puoi richiedere modifiche o disdetta in qualsiasi momento. La cancellazione diventa effettiva alla fine del periodo già pagato, così non perdi nessuno dei vantaggi attivi.</p>
+      <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-indigo-500/10">
+        <h2 class="text-2xl font-bold mb-4">Gestione accesso</h2>
+        <p class="text-sm text-white/70 mb-4">Non sono previsti rinnovi automatici. Alla scadenza potrai acquistare un nuovo pass direttamente da questa pagina oppure contattare il supporto per eventuali proroghe personalizzate.</p>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/75">
-          <p class="mb-2"><strong>Stato cancellazione:</strong> <?= $cancelAtPeriodEnd ? 'in corso — il piano resterà attivo fino al termine del ciclo attuale.' : 'non richiesto — il piano si rinnoverà automaticamente ogni mese.' ?></p>
-          <p>Per aggiornare il metodo di pagamento o richiedere assistenza scrivi a <a href="mailto:support@raceverse.it" class="underline">support@raceverse.it</a>.</p>
+          <p class="mb-2"><strong>Scadenza attuale:</strong> <?= htmlspecialchars($expiresAt ?? '—') ?></p>
+          <p>Hai bisogno di estendere il pass o di una fattura? Scrivi a <a href="mailto:support@raceverse.it" class="underline">support@raceverse.it</a>.</p>
         </div>
         <div class="mt-4 flex flex-wrap gap-3">
-          <button type="button" data-action="open-retention" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-rose-500 via-fuchsia-500 to-indigo-500 text-black font-semibold shadow-lg shadow-rose-500/30">Richiedi cancellazione</button>
-          <a href="mailto:support@raceverse.it?subject=Aggiornamento%20pagamento%20RaceVerse%20PRO" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Supporto dedicato</a>
-        </div>
-        <div data-role="retention-panel" class="mt-4 p-4 rounded-2xl bg-black/50 border border-rose-400/30 text-white/80 space-y-3" style="display:none;">
-          <div class="text-sm font-semibold">Possiamo offrirti qualcosa in più</div>
-          <p class="text-sm">Se resti con RaceVerse PRO ti accreditiamo automaticamente un <strong>30% di sconto sul prossimo rinnovo</strong>. Preferisci approfittarne o vuoi proseguire con la disdetta?</p>
-          <div class="flex flex-wrap gap-3 text-sm">
-            <button type="button" data-action="stay-pro" class="px-4 py-2 rounded-xl bg-emerald-500/20 border border-emerald-300/40 text-emerald-100 hover:bg-emerald-500/30">Accetto lo sconto</button>
-            <button type="button" data-action="confirm-cancel" class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Continua con la cancellazione</button>
-          </div>
-          <p data-role="retention-message" class="text-xs text-white/60">Scegli un'opzione per procedere.</p>
+          <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Acquista un nuovo pass</a>
+          <a href="mailto:support@raceverse.it?subject=Assistenza%20pass%20RaceVerse%20PRO" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Supporto dedicato</a>
         </div>
       </div>
     </div>
@@ -129,7 +119,7 @@ include __DIR__ . '/templates/header.php';
 
       <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-purple-500/10 text-sm text-white/70">
         <h3 class="text-lg font-semibold text-white mb-3">Hai bisogno di aiuto?</h3>
-        <p class="mb-3">Il nostro team risponde rapidamente agli abbonati PRO. Prepariamo insieme la strategia per il tuo prossimo weekend di gara.</p>
+        <p class="mb-3">Il nostro team risponde rapidamente a chi possiede un pass PRO. Prepariamo insieme la strategia per il tuo prossimo weekend di gara.</p>
         <a href="mailto:support@raceverse.it" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Contatta il supporto</a>
       </div>
     </div>
@@ -138,8 +128,8 @@ include __DIR__ . '/templates/header.php';
   <section class="rounded-3xl p-8 md:p-12 bg-gradient-to-br from-emerald-600/20 via-cyan-500/10 to-indigo-600/20 border border-white/10 shadow-2xl shadow-emerald-500/20">
     <div class="max-w-3xl space-y-5">
       <span class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/10 border border-white/20 text-xs uppercase tracking-[0.35em]">Upgrade PRO</span>
-      <h1 class="text-4xl md:text-5xl font-black leading-tight">RaceVerse PRO da €2,99/mese</h1>
-      <p class="text-white/70 text-lg">Potenzia il tuo account BASIC con report avanzati, setup certificati e supporto prioritario. Con Stripe e PayPal integriamo un checkout sicuro per attivare subito il piano PRO.</p>
+      <h1 class="text-4xl md:text-5xl font-black leading-tight">Accesso RaceVerse PRO da €2,99</h1>
+      <p class="text-white/70 text-lg">Potenzia il tuo account BASIC con report avanzati, setup certificati e supporto prioritario. Scegli un pass occasionale (30, 90, 180 o 365 giorni) e attivalo subito con Stripe o PayPal.</p>
       <?php if ($statusMessage): ?>
         <div class="p-4 rounded-2xl bg-black/40 border border-white/10 text-sm text-white/80"><?= htmlspecialchars($statusMessage) ?></div>
       <?php endif; ?>
@@ -149,7 +139,7 @@ include __DIR__ . '/templates/header.php';
         <?php else: ?>
           <a href="#piani" class="px-6 py-3 rounded-2xl bg-white text-black font-semibold shadow-lg shadow-white/40">Scegli il tuo piano</a>
         <?php endif; ?>
-        <a href="mailto:support@raceverse.it?subject=Domande%20abbonamento%20RaceVerse%20PRO" class="px-6 py-3 rounded-2xl bg-white/10 border border-white/30 text-white/80 hover:text-white">Serve assistenza?</a>
+        <a href="mailto:support@raceverse.it?subject=Domande%20pass%20RaceVerse%20PRO" class="px-6 py-3 rounded-2xl bg-white/10 border border-white/30 text-white/80 hover:text-white">Serve assistenza?</a>
       </div>
     </div>
   </section>
@@ -157,7 +147,7 @@ include __DIR__ . '/templates/header.php';
   <section class="grid lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 space-y-6">
       <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-emerald-500/10">
-        <h2 class="text-2xl font-bold mb-4">Cosa include RaceVerse PRO</h2>
+        <h2 class="text-2xl font-bold mb-4">Cosa include l'accesso RaceVerse PRO</h2>
         <div class="grid md:grid-cols-2 gap-4 text-sm text-white/75">
           <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
             <div class="text-lg font-semibold text-white mb-2">Report dinamici</div>
@@ -181,31 +171,31 @@ include __DIR__ . '/templates/header.php';
       <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-indigo-500/10">
         <h2 class="text-2xl font-bold mb-4">Come funziona l'attivazione</h2>
         <ol class="space-y-3 text-white/70 text-sm">
-          <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">1</span> Confermi l'account BASIC e scegli il piano PRO che preferisci.</li>
+          <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">1</span> Confermi l'account BASIC e scegli il pass PRO che preferisci.</li>
           <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">2</span> Completi il checkout protetto con Stripe o PayPal.</li>
-          <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">3</span> Torni su RaceVerse e trovi attivo il tuo abbonamento per tutto il periodo acquistato.</li>
+          <li class="flex gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">3</span> Torni su RaceVerse e trovi attivo l'accesso per tutta la durata acquistata.</li>
         </ol>
-        <p class="mt-4 text-xs text-white/50">Puoi annullare l'abbonamento in qualsiasi momento: l'accesso resterà attivo fino alla fine del periodo già pagato.</p>
+        <p class="mt-4 text-xs text-white/50">Nessun rinnovo automatico: alla scadenza potrai acquistare un nuovo pass quando desideri.</p>
       </div>
     </div>
 
     <div class="space-y-6">
       <div id="piani" class="p-6 rounded-3xl bg-gradient-to-br from-emerald-500/30 via-teal-500/20 to-cyan-500/30 border border-emerald-400/40 shadow-xl shadow-emerald-500/30">
-        <div class="text-xs uppercase tracking-[0.4em] text-white/70 mb-2">Scegli il tuo piano PRO</div>
+        <div class="text-xs uppercase tracking-[0.4em] text-white/70 mb-2">Scegli il tuo pass PRO</div>
         <div class="grid gap-4 text-sm">
           <?php foreach ($plans as $plan): ?>
             <div class="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-4">
               <div class="flex items-baseline justify-between gap-2">
                 <div>
-                  <div class="text-white font-semibold text-lg"><?= htmlspecialchars($plan['label']) ?></div>
-                  <div class="text-white/60 text-xs uppercase tracking-widest">RaceVerse PRO</div>
+                  <div class="text-white font-semibold text-lg"><?= htmlspecialchars($plan['label']) ?> di accesso</div>
+                  <div class="text-white/60 text-xs uppercase tracking-widest">Pass RaceVerse PRO</div>
                 </div>
                 <div class="text-right">
                   <div class="text-2xl font-black text-white">€<?= number_format($plan['price_eur'], 2, ',', '.') ?></div>
-                  <div class="text-white/60 text-xs"><?= $plan['label'] === 'Mensile' ? 'al mese' : ($plan['label'] === 'Annuale' ? 'all&#39;anno' : 'per periodo') ?></div>
+                  <div class="text-white/60 text-xs">una tantum</div>
                 </div>
               </div>
-              <p class="text-white/70 text-sm">Attiva subito <?= strtolower($plan['label']) ?> di vantaggi premium: setup certificati, analytics avanzate e supporto priority.</p>
+              <p class="text-white/70 text-sm">Attiva subito <?= strtolower($plan['label']) ?> di vantaggi premium: setup certificati, analytics avanzate e supporto priority senza rinnovi automatici.</p>
               <?php if ($currentUser): ?>
                 <div class="grid sm:grid-cols-2 gap-3">
                   <form method="post" action="<?= asset('payment-start.php') ?>" class="contents">
@@ -220,65 +210,25 @@ include __DIR__ . '/templates/header.php';
                   </form>
                 </div>
               <?php else: ?>
-                <a href="<?= asset('login.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Accedi per abbonarti</a>
+                <a href="<?= asset('login.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Accedi per acquistare</a>
               <?php endif; ?>
             </div>
           <?php endforeach; ?>
         </div>
         <ul class="mt-4 space-y-2 text-sm text-white/80">
           <li>• RaceVerse BASIC resta gratuito con conferma email immediata.</li>
-          <li>• Scegli tu la durata del piano PRO: mensile, trimestrale, semestrale o annuale.</li>
-          <li>• Puoi disdire quando vuoi: la disdetta vale dal termine del periodo pagato.</li>
+          <li>• Seleziona la durata che preferisci: 1, 3, 6 o 12 mesi di accesso.</li>
+          <li>• Nessun rinnovo automatico: al termine potrai acquistare un nuovo pass.</li>
         </ul>
       </div>
 
       <div class="p-6 rounded-3xl bg-black/40 border border-white/10 shadow-xl shadow-purple-500/10 text-sm text-white/70">
         <h3 class="text-lg font-semibold text-white mb-3">Domande frequenti</h3>
-        <p class="mb-3"><strong>Quando sarà attivo il checkout?</strong><br>Stiamo integrando Stripe: riceverai un avviso appena il pagamento self-service sarà disponibile.</p>
-        <p class="mb-3"><strong>Posso usare PRO senza pagare ora?</strong><br>Sì, puoi richiedere l'attivazione manuale mentre finalizziamo la parte di pagamento.</p>
-        <p><strong>Il prezzo aumenterà?</strong><br>No, l'offerta di lancio a €2,99/mese resta bloccata per tutti gli abbonati attivi.</p>
+        <p class="mb-3"><strong>Il pagamento è ricorrente?</strong><br>No, ogni pass è un acquisto singolo. Alla scadenza potrai comprare un nuovo accesso quando ti serve.</p>
+        <p class="mb-3"><strong>Quando si attiva il pass?</strong><br>Subito dopo il pagamento riceverai conferma via email e l'accesso PRO sarà valido per l'intero periodo scelto.</p>
+        <p><strong>Posso avere fattura?</strong><br>Sì, contattaci su <a href="mailto:billing@raceverse.it" class="underline">billing@raceverse.it</a> indicando numero ordine e dati fiscali.</p>
       </div>
     </div>
   </section>
 <?php endif; ?>
-<script>
-  (() => {
-    const attachRetention = (rootId) => {
-      const root = document.getElementById(rootId);
-      if (!root) return;
-      const panel = root.querySelector('[data-role="retention-panel"]');
-      const trigger = root.querySelector('[data-action="open-retention"]');
-      const stay = root.querySelector('[data-action="stay-pro"]');
-      const cancel = root.querySelector('[data-action="confirm-cancel"]');
-      const message = root.querySelector('[data-role="retention-message"]');
-      if (trigger && panel) {
-        trigger.addEventListener('click', () => {
-          panel.style.display = 'block';
-          trigger.setAttribute('aria-expanded', 'true');
-        });
-      }
-      if (stay && message) {
-        stay.addEventListener('click', () => {
-          message.textContent = 'Perfetto! Abbiamo riservato il 30% di sconto sul prossimo rinnovo. Riceverai conferma via email.';
-          stay.textContent = 'Sconto applicato';
-          stay.setAttribute('disabled', 'disabled');
-          if (cancel) {
-            cancel.setAttribute('disabled', 'disabled');
-          }
-        });
-      }
-      if (cancel && message) {
-        cancel.addEventListener('click', () => {
-          message.textContent = 'La richiesta di cancellazione è stata registrata. Ti contatteremo per completare la procedura.';
-          cancel.textContent = 'Richiesta inviata';
-          cancel.setAttribute('disabled', 'disabled');
-          if (stay) {
-            stay.setAttribute('disabled', 'disabled');
-          }
-        });
-      }
-    };
-    attachRetention('payment-retention');
-  })();
-</script>
 <?php include __DIR__ . '/templates/footer.php'; ?>

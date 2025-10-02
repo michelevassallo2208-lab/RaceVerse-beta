@@ -32,9 +32,8 @@ $formatDateTime = static function (?string $dateTime): ?string {
 $isPro = Auth::isPro();
 $planName = $user['subscription_plan'] ?: 'RaceVerse BASIC';
 $startedAt = $formatDateTime($user['subscription_started_at'] ?? null);
-$renewsAt = $formatDateTime($user['subscription_renews_at'] ?? null);
+$expiresAt = $formatDateTime(($user['subscription_expires_at'] ?? null) ?: ($user['subscription_renews_at'] ?? null));
 $paymentMethod = $user['subscription_payment_method'] ?? null;
-$cancelAtPeriodEnd = !empty($user['subscription_cancel_at_period_end']);
 include __DIR__ . '/templates/header.php';
 ?>
 <section class="rounded-3xl p-8 bg-black/40 border border-white/10 shadow-2xl shadow-emerald-500/20">
@@ -68,7 +67,7 @@ include __DIR__ . '/templates/header.php';
         <div class="flex items-center justify-between gap-3">
           <div>
             <h3 class="font-semibold text-lg mb-1">RaceVerse PRO</h3>
-            <p class="text-sm text-white/70">Report avanzati, setup esclusivi e supporto prioritario da €2,99/mese.</p>
+            <p class="text-sm text-white/70">Report avanzati, setup esclusivi e supporto prioritario con pass da 1 a 12 mesi.</p>
           </div>
           <?php if ($isPro): ?>
             <span class="inline-flex px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs uppercase tracking-widest">Attivo</span>
@@ -76,42 +75,29 @@ include __DIR__ . '/templates/header.php';
         </div>
         <?php if (!$isPro): ?>
           <div class="flex flex-wrap gap-3">
-            <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Passa a RaceVerse PRO</a>
-            <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/15 text-white/80 hover:text-white">Scopri vantaggi</a>
+            <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Acquista un pass PRO</a>
+            <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/15 text-white/80 hover:text-white">Vedi tutti i piani</a>
           </div>
         <?php else: ?>
-          <div class="space-y-3 text-sm text-white/70" id="account-retention">
-            <p class="font-semibold text-white flex items-center gap-2"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">✓</span> Sei già abbonato a RaceVerse PRO.</p>
+          <div class="space-y-3 text-sm text-white/70">
+            <p class="font-semibold text-white flex items-center gap-2"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">✓</span> Hai un pass RaceVerse PRO attivo.</p>
             <dl class="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm">
               <div class="p-3 rounded-xl bg-black/30 border border-white/10">
                 <dt class="text-white/60 uppercase tracking-wide text-[0.65rem] mb-1">Attivo dal</dt>
                 <dd class="text-white/90 font-medium"><?= htmlspecialchars($startedAt ?? '—') ?></dd>
               </div>
               <div class="p-3 rounded-xl bg-black/30 border border-white/10">
-                <dt class="text-white/60 uppercase tracking-wide text-[0.65rem] mb-1">Rinnovo</dt>
-                <dd class="text-white/90 font-medium"><?= htmlspecialchars($renewsAt ?? '—') ?></dd>
+                <dt class="text-white/60 uppercase tracking-wide text-[0.65rem] mb-1">Scadenza</dt>
+                <dd class="text-white/90 font-medium"><?= htmlspecialchars($expiresAt ?? '—') ?></dd>
               </div>
               <div class="p-3 rounded-xl bg-black/30 border border-white/10">
                 <dt class="text-white/60 uppercase tracking-wide text-[0.65rem] mb-1">Metodo di pagamento</dt>
                 <dd class="text-white/90 font-medium"><?= htmlspecialchars($paymentMethod ?? 'In aggiornamento') ?></dd>
               </div>
-              <div class="p-3 rounded-xl bg-black/30 border border-white/10">
-                <dt class="text-white/60 uppercase tracking-wide text-[0.65rem] mb-1">Cancellazione</dt>
-                <dd class="text-white/90 font-medium"><?= $cancelAtPeriodEnd ? 'Disdetto: termina a fine periodo' : 'Puoi disdire: terminerà a fine periodo pagato' ?></dd>
-              </div>
             </dl>
             <div class="flex flex-wrap gap-3">
-              <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/15 text-white/80 hover:text-white">Dettagli abbonamento</a>
-              <button type="button" data-action="open-retention" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-rose-500 via-fuchsia-500 to-indigo-500 text-black font-semibold shadow-lg shadow-rose-500/30">Richiedi cancellazione</button>
-            </div>
-            <div data-role="retention-panel" class="p-4 rounded-2xl bg-black/50 border border-rose-400/30 text-white/80 space-y-3" style="display:none;">
-              <div class="text-sm font-semibold">Prima di andare via...</div>
-              <p class="text-sm">Rimani con noi e ti riserviamo un <strong>30% di sconto sul prossimo mese di RaceVerse PRO</strong>. Preferisci continuare a goderti tutti i vantaggi premium o vuoi comunque disdire?</p>
-              <div class="flex flex-wrap gap-3 text-sm">
-                <button type="button" data-action="stay-pro" class="px-4 py-2 rounded-xl bg-emerald-500/20 border border-emerald-300/40 text-emerald-100 hover:bg-emerald-500/30">Accetta lo sconto e rimani</button>
-                <button type="button" data-action="confirm-cancel" class="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Continua con la cancellazione</button>
-              </div>
-              <p data-role="retention-message" class="text-xs text-white/60">Nessuna azione ancora registrata.</p>
+              <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-white/10 border border-white/15 text-white/80 hover:text-white">Gestisci il tuo pass</a>
+              <a href="<?= asset('payment.php') ?>" class="inline-flex px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/30">Acquista nuovo pass</a>
             </div>
           </div>
         <?php endif; ?>
@@ -140,44 +126,4 @@ include __DIR__ . '/templates/header.php';
     </div>
   </div>
 </section>
-<script>
-  (() => {
-    const attachRetention = (rootId) => {
-      const root = document.getElementById(rootId);
-      if (!root) return;
-      const panel = root.querySelector('[data-role="retention-panel"]');
-      const trigger = root.querySelector('[data-action="open-retention"]');
-      const stay = root.querySelector('[data-action="stay-pro"]');
-      const cancel = root.querySelector('[data-action="confirm-cancel"]');
-      const message = root.querySelector('[data-role="retention-message"]');
-      if (trigger && panel) {
-        trigger.addEventListener('click', () => {
-          panel.style.display = 'block';
-          trigger.setAttribute('aria-expanded', 'true');
-        });
-      }
-      if (stay && message) {
-        stay.addEventListener('click', () => {
-          message.textContent = 'Perfetto! Ti riserviamo il 30% di sconto per il prossimo mese. Riceverai una conferma via email a breve.';
-          stay.textContent = 'Sconto applicato';
-          stay.setAttribute('disabled', 'disabled');
-          if (cancel) {
-            cancel.setAttribute('disabled', 'disabled');
-          }
-        });
-      }
-      if (cancel && message) {
-        cancel.addEventListener('click', () => {
-          message.textContent = 'Abbiamo registrato la tua richiesta di cancellazione. Il team RaceVerse ti contatterà per completare la procedura.';
-          cancel.textContent = 'Richiesta inviata';
-          cancel.setAttribute('disabled', 'disabled');
-          if (stay) {
-            stay.setAttribute('disabled', 'disabled');
-          }
-        });
-      }
-    };
-    attachRetention('account-retention');
-  })();
-</script>
 <?php include __DIR__ . '/templates/footer.php'; ?>

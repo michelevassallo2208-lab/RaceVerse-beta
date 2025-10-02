@@ -38,6 +38,7 @@ class Auth {
         'subscription_renews_at'=>$u['subscription_renews_at'],
         'subscription_payment_method'=>$u['subscription_payment_method'],
         'subscription_cancel_at_period_end'=>(bool)$u['subscription_cancel_at_period_end'],
+        'subscription_expires_at'=>$u['subscription_expires_at'] ?? $u['subscription_renews_at'],
         'expires_at'=>$expiry,
       ];
       return true;

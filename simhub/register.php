@@ -94,7 +94,7 @@ include __DIR__ . '/templates/header.php';
       </div>
       <p class="text-white/70 text-sm leading-relaxed">
         L'iscrizione gratuita ti apre l'accesso a <strong>RaceVerse BASIC</strong> per gestire i tuoi dati e prepararti alle prossime sessioni.
-        Dopo la registrazione riceverai un'email per confermare l'indirizzo. Potrai passare a <strong>RaceVerse PRO</strong> (2,99€/mese) dalla pagina abbonamento.
+        Dopo la registrazione riceverai un'email per confermare l'indirizzo. Potrai attivare un <strong>pass RaceVerse PRO</strong> (da €2,99) dalla pagina accesso PRO.
       </p>
       <ul class="space-y-2 text-white/75 text-sm">
         <li>• Accesso immediato alla dashboard RaceVerse BASIC.</li>

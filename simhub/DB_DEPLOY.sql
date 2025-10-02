@@ -437,7 +437,7 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `first_name`, `last_name`, 
 -- Dump dei dati della tabella simhub.support_tickets: ~2 rows (circa)
 INSERT INTO `support_tickets` (`id`, `code`, `user_id`, `email`, `subject`, `status`, `user_followups`, `last_message_by`, `created_at`, `updated_at`, `closed_at`) VALUES
         (1, 'RV-1A2B3C', 2, 'michelevassallo1999@gmail.com', 'Richiesta setup personalizzato', 'waiting_admin', 1, 'user', '2025-10-02 09:15:00', '2025-10-02 11:45:00', NULL),
-        (2, 'RV-GUEST1', NULL, 'guest@example.com', 'Informazioni abbonamento', 'closed', 1, 'admin', '2025-10-01 15:20:00', '2025-10-02 08:10:00', '2025-10-02 08:10:00');
+        (2, 'RV-GUEST1', NULL, 'guest@example.com', 'Informazioni pass PRO', 'closed', 1, 'admin', '2025-10-01 15:20:00', '2025-10-02 08:10:00', '2025-10-02 08:10:00');
 
 -- Dump dei dati della tabella simhub.support_messages: ~5 rows (circa)
 INSERT INTO `support_messages` (`id`, `ticket_id`, `sender_type`, `sender_id`, `body`, `created_at`) VALUES

@@ -6,29 +6,29 @@ class SubscriptionManager
     private const PLANS = [
         'pro_monthly' => [
             'code' => 'pro_monthly',
-            'label' => 'Mensile',
-            'name' => 'RaceVerse PRO (Mensile)',
+            'label' => '1 mese',
+            'name' => 'Accesso RaceVerse PRO — 30 giorni',
             'price_eur' => 2.99,
             'duration_days' => 30,
         ],
         'pro_quarterly' => [
             'code' => 'pro_quarterly',
-            'label' => 'Trimestrale',
-            'name' => 'RaceVerse PRO (Trimestrale)',
+            'label' => '3 mesi',
+            'name' => 'Accesso RaceVerse PRO — 3 mesi',
             'price_eur' => 7.97,
             'duration_days' => 90,
         ],
         'pro_semiannual' => [
             'code' => 'pro_semiannual',
-            'label' => 'Semestrale',
-            'name' => 'RaceVerse PRO (Semestrale)',
+            'label' => '6 mesi',
+            'name' => 'Accesso RaceVerse PRO — 6 mesi',
             'price_eur' => 15.00,
             'duration_days' => 180,
         ],
         'pro_annual' => [
             'code' => 'pro_annual',
-            'label' => 'Annuale',
-            'name' => 'RaceVerse PRO (Annuale)',
+            'label' => '12 mesi',
+            'name' => 'Accesso RaceVerse PRO — 12 mesi',
             'price_eur' => 25.00,
             'duration_days' => 365,
         ],
@@ -54,13 +54,13 @@ class SubscriptionManager
         $pdo = Database::pdo();
         $now = new DateTimeImmutable('now');
         $started = $now->format('Y-m-d H:i:s');
-        $renew = $now->modify('+' . $plan['duration_days'] . ' days')->format('Y-m-d H:i:s');
+        $expires = $now->modify('+' . $plan['duration_days'] . ' days')->format('Y-m-d H:i:s');
 
         $st = $pdo->prepare('UPDATE users SET subscription_plan = ?, subscription_active = 1, subscription_started_at = ?, subscription_renews_at = ?, subscription_payment_method = ?, subscription_cancel_at_period_end = 0 WHERE id = ?');
         $st->execute([
             $plan['name'],
             $started,
-            $renew,
+            $expires,
             $paymentMethod,
             $userId,
         ]);
@@ -74,14 +74,17 @@ class SubscriptionManager
         $st = $pdo->prepare('SELECT id, email, role, subscription_plan, subscription_active, subscription_started_at, subscription_renews_at, subscription_payment_method, subscription_cancel_at_period_end FROM users WHERE id = ? LIMIT 1');
         $st->execute([$userId]);
         $user = $st->fetch();
+        if ($user && !empty($user['subscription_renews_at']) && empty($user['subscription_expires_at'])) {
+            $user['subscription_expires_at'] = $user['subscription_renews_at'];
+        }
         return $user ?: null;
     }
 
     public static function normalizeUser(array $user): array
     {
         if (!empty($user['subscription_active']) && !empty($user['subscription_renews_at'])) {
-            $renewTs = strtotime($user['subscription_renews_at']);
-            if ($renewTs !== false && $renewTs <= time()) {
+            $expiresTs = strtotime($user['subscription_renews_at']);
+            if ($expiresTs !== false && $expiresTs <= time()) {
                 $existing = $user;
                 $user = self::deactivate($user['id']);
                 if (!empty($existing['email']) && empty($user['email'])) {
@@ -90,6 +93,8 @@ class SubscriptionManager
                 if (!empty($existing['role']) && empty($user['role'])) {
                     $user['role'] = $existing['role'];
                 }
+            } else {
+                $user['subscription_expires_at'] = $user['subscription_renews_at'];
             }
         }
         return $user;
@@ -103,6 +108,9 @@ class SubscriptionManager
         $user = self::fetchUser($userId);
         if ($user) {
             $user['subscription_active'] = (bool)($user['subscription_active'] ?? false);
+            if (isset($user['subscription_expires_at'])) {
+                $user['subscription_expires_at'] = null;
+            }
         }
         return $user ?? [
             'id' => $userId,
@@ -110,6 +118,7 @@ class SubscriptionManager
             'subscription_active' => false,
             'subscription_started_at' => null,
             'subscription_renews_at' => null,
+            'subscription_expires_at' => null,
             'subscription_payment_method' => null,
             'subscription_cancel_at_period_end' => 0,
             'email' => null,

@@ -582,7 +582,7 @@ if ($pdo) {
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 class="text-2xl font-semibold">Gestione utenti</h2>
-            <p class="text-sm text-white/60">Aggiorna ruoli, abbonamenti e password direttamente dal pannello.</p>
+            <p class="text-sm text-white/60">Aggiorna ruoli, pass PRO e password direttamente dal pannello.</p>
           </div>
         </div>
         <?php if ($users): ?>
@@ -619,11 +619,11 @@ if ($pdo) {
                   </div>
                   <label class="flex items-center gap-2 text-sm text-white/70">
                     <input type="checkbox" name="subscription_active" value="1" <?= $user['subscription_active'] ? 'checked' : '' ?> class="rounded border-white/20 bg-white/5">
-                    Abbonamento attivo
+                    Pass PRO attivo
                   </label>
                   <label class="flex items-center gap-2 text-sm text-white/70">
                     <input type="checkbox" name="subscription_cancel_at_period_end" value="1" <?= $user['subscription_cancel_at_period_end'] ? 'checked' : '' ?> class="rounded border-white/20 bg-white/5">
-                    Cancellazione a fine periodo
+                    Disattivazione programmata
                   </label>
                   <label class="block text-sm space-y-1">
                     <span class="text-white/60">Metodo di pagamento</span>
@@ -635,7 +635,7 @@ if ($pdo) {
                       <input type="datetime-local" name="subscription_started_at" value="<?= htmlspecialchars(admin_to_datetime_value($user['subscription_started_at'])) ?>" class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                     </label>
                     <label class="space-y-1">
-                      <span class="text-white/60">Rinnovo</span>
+                      <span class="text-white/60">Scadenza pass</span>
                       <input type="datetime-local" name="subscription_renews_at" value="<?= htmlspecialchars(admin_to_datetime_value($user['subscription_renews_at'])) ?>" class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                     </label>
                   </div>

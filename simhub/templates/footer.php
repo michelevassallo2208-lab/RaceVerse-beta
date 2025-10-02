@@ -9,7 +9,7 @@ require_once __DIR__ . '/../src/helpers.php';
         <img src="<?= asset('assets/images/logo.png') ?>" class="w-9 h-9" alt="logo">
         <div>
           <div class="text-lg font-semibold">RaceVerse</div>
-          <div class="text-xs text-white/50">RaceVerse BASIC gratuito, upgrade PRO a €2,99/mese</div>
+          <div class="text-xs text-white/50">RaceVerse BASIC gratuito, pass PRO da €2,99</div>
         </div>
       </div>
       <p class="text-white/60 leading-relaxed">Hotlap curati, analisi affidabili e strumenti concreti per scalare le classifiche.</p>
@@ -18,7 +18,7 @@ require_once __DIR__ . '/../src/helpers.php';
       <h4 class="text-white font-semibold mb-3">Esplora</h4>
       <ul class="space-y-2 text-white/70">
         <li><a class="hover:text-white transition" href="<?= asset('index.php') ?>#insights">Insights &amp; analisi</a></li>
-        <li><a class="hover:text-white transition" href="<?= asset('payment.php') ?>">Piani e abbonamento</a></li>
+        <li><a class="hover:text-white transition" href="<?= asset('payment.php') ?>">Pass e Accesso PRO</a></li>
         <li><a class="hover:text-white transition" href="<?= asset('register.php') ?>">Crea account BASIC</a></li>
         <li><a class="hover:text-white transition" href="<?= asset('login.php') ?>">Accedi</a></li>
         <li><a class="hover:text-white transition" href="<?= asset('support-guest.php') ?>">Supporto &amp; ticket</a></li>

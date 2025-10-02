@@ -120,7 +120,7 @@ include __DIR__ . '/templates/header.php';
   <div class="grid md:grid-cols-2 gap-8 items-center">
     <div class="space-y-4">
       <h2 class="text-3xl font-black text-emerald-200">RaceVerse PRO</h2>
-      <p class="text-white/70 text-lg">Iscriviti gratis a RaceVerse BASIC e passa a PRO quando vuoi: report avanzati, setup esclusivi e briefing pronti per il tuo team.</p>
+      <p class="text-white/70 text-lg">Iscriviti gratis a RaceVerse BASIC e attiva un pass PRO quando vuoi: report avanzati, setup esclusivi e briefing pronti per il tuo team.</p>
       <ul class="space-y-2 text-white/80 text-sm">
         <li>• Libreria di setup condivisi dal team RaceVerse</li>
         <li>• Analisi tempi con confronto storico</li>
@@ -128,16 +128,16 @@ include __DIR__ . '/templates/header.php';
       </ul>
       <div class="flex gap-3">
         <a href="<?= asset('login.php') ?>" class="px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-black font-semibold shadow-lg shadow-emerald-500/40">Accedi</a>
-        <a href="<?= asset('payment.php') ?>" class="px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Abbonati a PRO</a>
+        <a href="<?= asset('payment.php') ?>" class="px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white/80 hover:text-white">Acquista pass PRO</a>
       </div>
     </div>
     <div class="relative">
       <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/40 via-teal-500/30 to-indigo-500/30 blur-3xl"></div>
       <div class="relative rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4 shadow-2xl shadow-emerald-500/20">
-        <div class="text-sm uppercase tracking-[0.4em] text-white/60">Abbonamento mensile</div>
-        <div class="text-4xl font-black">€2,99<span class="text-lg font-semibold text-white/70">/mese</span></div>
-        <p class="text-white/70 text-sm">Disdici quando vuoi. Ricevi aggiornamenti mirati e mantieni la tua squadra allineata sui tempi.</p>
-        <a href="<?= asset('payment.php') ?>" class="block text-center w-full py-3 rounded-2xl bg-white text-black font-semibold">Vai alla pagina abbonamento</a>
+        <div class="text-sm uppercase tracking-[0.4em] text-white/60">Pass 30 giorni</div>
+        <div class="text-4xl font-black">€2,99<span class="text-lg font-semibold text-white/70"> una tantum</span></div>
+        <p class="text-white/70 text-sm">Nessun rinnovo automatico: rinnova il pass quando ti serve e mantieni la tua squadra allineata sui tempi.</p>
+        <a href="<?= asset('payment.php') ?>" class="block text-center w-full py-3 rounded-2xl bg-white text-black font-semibold">Vai alla pagina Accesso PRO</a>
       </div>
     </div>
   </div>

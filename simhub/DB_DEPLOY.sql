@@ -320,19 +320,50 @@ CREATE TABLE IF NOT EXISTS `tracks` (
 
 -- Dump dei dati della tabella simhub.tracks: ~13 rows (circa)
 INSERT INTO `tracks` (`id`, `game_id`, `name`, `image_path`) VALUES
-	(1, 1, 'Autodromo Nazionale di Monza', NULL),
-	(2, 1, 'Autódromo José Carlos Pace – Interlagos', NULL),
-	(3, 1, 'Bahrain International Circuit', NULL),
-	(4, 1, 'Circuit de la Sarthe – Le Mans', NULL),
-	(5, 1, 'Circuit de Spa-Francorchamps', NULL),
-	(6, 1, 'Fuji Speedway', NULL),
-	(7, 1, 'Imola – Autodromo Enzo e Dino Ferrari', NULL),
-	(8, 1, 'Losail International Circuit – Qatar', NULL),
-	(9, 1, 'Portimão – Algarve International Circuit', NULL),
-	(10, 1, 'Sebring International Raceway', NULL),
-	(11, 1, 'Silverstone Circuit', NULL),
-	(12, 1, 'Circuit of the Americas – Austin', NULL),
-	(13, 1, 'Motorland Aragón', NULL);
+        (1, 1, 'Autodromo Nazionale di Monza', NULL),
+        (2, 1, 'Autódromo José Carlos Pace – Interlagos', NULL),
+        (3, 1, 'Bahrain International Circuit', NULL),
+        (4, 1, 'Circuit de la Sarthe – Le Mans', NULL),
+        (5, 1, 'Circuit de Spa-Francorchamps', NULL),
+        (6, 1, 'Fuji Speedway', NULL),
+        (7, 1, 'Imola – Autodromo Enzo e Dino Ferrari', NULL),
+        (8, 1, 'Losail International Circuit – Qatar', NULL),
+        (9, 1, 'Portimão – Algarve International Circuit', NULL),
+        (10, 1, 'Sebring International Raceway', NULL),
+        (11, 1, 'Silverstone Circuit', NULL),
+        (12, 1, 'Circuit of the Americas – Austin', NULL),
+        (13, 1, 'Motorland Aragón', NULL);
+
+-- Dump della struttura di tabella simhub.car_setups
+CREATE TABLE IF NOT EXISTS `car_setups` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `car_id` int(11) NOT NULL,
+  `track_id` int(11) NOT NULL,
+  `file_slug` varchar(120) NOT NULL,
+  `notes` text DEFAULT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `car_track_unique` (`car_id`,`track_id`),
+  KEY `track_id` (`track_id`),
+  CONSTRAINT `car_setups_ibfk_1` FOREIGN KEY (`car_id`) REFERENCES `cars` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `car_setups_ibfk_2` FOREIGN KEY (`track_id`) REFERENCES `tracks` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Popola gli assetti con un file dedicato per ogni combinazione auto/pista
+INSERT INTO `car_setups` (`car_id`, `track_id`, `file_slug`, `notes`, `file_path`)
+SELECT DISTINCT
+    h.car_id,
+    h.track_id,
+    CONCAT('rv', LPAD(h.track_id, 2, '0'), LPAD(h.car_id, 2, '0')) AS file_slug,
+    CONCAT('Assetto RaceVerse PRO ottimizzato per ', c.name, ' sul tracciato ', t.name, '.') AS notes,
+    NULL AS file_path
+FROM hotlaps h
+JOIN cars c ON c.id = h.car_id
+JOIN tracks t ON t.id = h.track_id
+ON DUPLICATE KEY UPDATE
+    file_slug = VALUES(file_slug),
+    notes = VALUES(notes);
 
 -- Dump della struttura di tabella simhub.users
 CREATE TABLE IF NOT EXISTS `users` (
@@ -346,15 +377,75 @@ CREATE TABLE IF NOT EXISTS `users` (
   `role` enum('admin','user') NOT NULL DEFAULT 'user',
   `subscription_plan` varchar(64) DEFAULT NULL,
   `subscription_active` tinyint(1) NOT NULL DEFAULT 0,
+  `subscription_started_at` datetime DEFAULT NULL,
+  `subscription_renews_at` datetime DEFAULT NULL,
+  `subscription_payment_method` varchar(120) DEFAULT NULL,
+  `subscription_cancel_at_period_end` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Dump della struttura di tabella simhub.newsletter_subscriptions
+CREATE TABLE IF NOT EXISTS `newsletter_subscriptions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `email` varchar(190) NOT NULL,
+  `unsubscribe_token` varchar(64) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email_unique` (`email`),
+  UNIQUE KEY `unsubscribe_token_unique` (`unsubscribe_token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dump della struttura di tabella simhub.support_tickets
+CREATE TABLE IF NOT EXISTS `support_tickets` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(16) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `email` varchar(190) NOT NULL,
+  `subject` varchar(190) NOT NULL,
+  `status` enum('waiting_admin','waiting_user','closed') NOT NULL DEFAULT 'waiting_admin',
+  `user_followups` tinyint(2) NOT NULL DEFAULT 0,
+  `last_message_by` enum('user','admin') NOT NULL DEFAULT 'user',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `closed_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code_unique` (`code`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `support_tickets_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dump della struttura di tabella simhub.support_messages
+CREATE TABLE IF NOT EXISTS `support_messages` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ticket_id` int(11) NOT NULL,
+  `sender_type` enum('user','admin','system') NOT NULL DEFAULT 'user',
+  `sender_id` int(11) DEFAULT NULL,
+  `body` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `ticket_id` (`ticket_id`),
+  CONSTRAINT `support_messages_ticket_fk` FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- Dump dei dati della tabella simhub.users: ~2 rows (circa)
-INSERT INTO `users` (`id`, `email`, `password_hash`, `first_name`, `last_name`, `verification_token`, `email_verified_at`, `role`, `subscription_plan`, `subscription_active`, `created_at`) VALUES
-	(1, 'admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'User', 'Raceverse', NULL, NULL, 'admin', 'MetaVerse Pro', 1, '2025-10-01 08:26:46'),
-	(2, 'michelevassallo1999@gmail.com', '$2y$10$vRvRTWq7hEOegFPQlQlWCOiLOWb8e6haYRkQqBJDnJFQuDYBnDxHG', 'Michele', 'Vassallo', '38bcca10daaa0a9c2a70b95ffadaa4b09ab961cf6d0ffdca2bbaf04bd7d14614', '2025-10-01 12:55:24', 'admin', 'MetaVerse Pro', 1, '2025-10-01 10:53:30');
+INSERT INTO `users` (`id`, `email`, `password_hash`, `first_name`, `last_name`, `verification_token`, `email_verified_at`, `role`, `subscription_plan`, `subscription_active`, `subscription_started_at`, `subscription_renews_at`, `subscription_payment_method`, `subscription_cancel_at_period_end`, `created_at`) VALUES
+        (1, 'admin@example.com', '$2y$10$wH5iC7R0iHq1w1e9VvbDWO9sV.8Xv1VdOZC2kQd7t0OQv3RrQqU9K', 'User', 'Raceverse', NULL, NULL, 'admin', 'RaceVerse PRO', 1, '2025-09-15 08:00:00', '2025-10-15 08:00:00', 'Carta di credito (Stripe)', 0, '2025-10-01 08:26:46'),
+        (2, 'michelevassallo1999@gmail.com', '$2y$10$vRvRTWq7hEOegFPQlQlWCOiLOWb8e6haYRkQqBJDnJFQuDYBnDxHG', 'Michele', 'Vassallo', '38bcca10daaa0a9c2a70b95ffadaa4b09ab961cf6d0ffdca2bbaf04bd7d14614', '2025-10-01 12:55:24', 'user', 'RaceVerse BASIC', 0, NULL, NULL, NULL, 0, '2025-10-01 10:53:30');
+
+-- Dump dei dati della tabella simhub.support_tickets: ~2 rows (circa)
+INSERT INTO `support_tickets` (`id`, `code`, `user_id`, `email`, `subject`, `status`, `user_followups`, `last_message_by`, `created_at`, `updated_at`, `closed_at`) VALUES
+        (1, 'RV-1A2B3C', 2, 'michelevassallo1999@gmail.com', 'Richiesta setup personalizzato', 'waiting_admin', 1, 'user', '2025-10-02 09:15:00', '2025-10-02 11:45:00', NULL),
+        (2, 'RV-GUEST1', NULL, 'guest@example.com', 'Informazioni pass PRO', 'closed', 1, 'admin', '2025-10-01 15:20:00', '2025-10-02 08:10:00', '2025-10-02 08:10:00');
+
+-- Dump dei dati della tabella simhub.support_messages: ~5 rows (circa)
+INSERT INTO `support_messages` (`id`, `ticket_id`, `sender_type`, `sender_id`, `body`, `created_at`) VALUES
+        (1, 1, 'user', 2, 'Ciao team RaceVerse, potete inviarmi un assetto bilanciato per Spa con la Ferrari 296 GT3?', '2025-10-02 09:15:00'),
+        (2, 1, 'admin', 1, 'Grazie per il ticket! Ti risponderemo con un pacchetto di setup entro 24 ore.', '2025-10-02 10:20:00'),
+        (3, 1, 'user', 2, 'Perfetto, resto in attesa. Grazie mille!', '2025-10-02 11:45:00'),
+        (4, 2, 'user', NULL, 'Buongiorno, vorrei capire meglio i vantaggi del piano PRO.', '2025-10-01 15:20:00'),
+        (5, 2, 'admin', 1, 'Ciao! Con RaceVerse PRO accedi ai setup esclusivi e supporto prioritario. Ti abbiamo inviato un coupon dedicato via email.', '2025-10-02 08:10:00');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
